@@ -1,5 +1,5 @@
 
-import { Building, Race, Resources, Talent } from './types';
+import { Building, BuildingUpgrade, Race, Resources, Talent } from './types';
 
 export const TICK_RATE_MS = 1000;
 export const SAVE_KEY = 'azeroth-idle-alliance-v3'; // Bumped version for talents
@@ -9,6 +9,14 @@ export const INITIAL_RESOURCES: Resources = {
   wood: 0,
   ore: 0,
 };
+
+export const DEFAULT_BUILDING_UPGRADES: BuildingUpgrade[] = [
+  { id: 'upgrade_10', threshold: 10, multiplier: 2, icon: 'Sparkles' },
+  { id: 'upgrade_25', threshold: 25, multiplier: 2, icon: 'Medal' },
+  { id: 'upgrade_50', threshold: 50, multiplier: 3, icon: 'Gem' },
+  { id: 'upgrade_75', threshold: 75, multiplier: 3, icon: 'Flame' },
+  { id: 'upgrade_100', threshold: 100, multiplier: 4, icon: 'Crown' },
+];
 
 export const RACES: Race[] = [
   {
@@ -63,6 +71,8 @@ export const INITIAL_BUILDINGS: Building[] = [
     costMultiplier: 1.5,
     count: 0,
     icon: 'Pickaxe', // Represents the peasant's tool
+    upgrades: DEFAULT_BUILDING_UPGRADES,
+    purchasedUpgrades: [],
   },
   {
     id: 'lumber_mill',
@@ -73,6 +83,8 @@ export const INITIAL_BUILDINGS: Building[] = [
     costMultiplier: 1.6,
     count: 0,
     icon: 'Axe',
+    upgrades: DEFAULT_BUILDING_UPGRADES,
+    purchasedUpgrades: [],
   },
   {
     id: 'blacksmith',
@@ -83,6 +95,8 @@ export const INITIAL_BUILDINGS: Building[] = [
     costMultiplier: 1.4,
     count: 0,
     icon: 'Hammer', // Anvil/Hammer vibe
+    upgrades: DEFAULT_BUILDING_UPGRADES,
+    purchasedUpgrades: [],
   },
   {
     id: 'inn',
@@ -93,6 +107,8 @@ export const INITIAL_BUILDINGS: Building[] = [
     costMultiplier: 1.5,
     count: 0,
     icon: 'Store', // Beer/Inn vibe
+    upgrades: DEFAULT_BUILDING_UPGRADES,
+    purchasedUpgrades: [],
   },
   {
     id: 'barracks',
@@ -103,6 +119,8 @@ export const INITIAL_BUILDINGS: Building[] = [
     costMultiplier: 1.6,
     count: 0,
     icon: 'Shield', 
+    upgrades: DEFAULT_BUILDING_UPGRADES,
+    purchasedUpgrades: [],
   },
   {
     id: 'mage_tower',
@@ -113,8 +131,17 @@ export const INITIAL_BUILDINGS: Building[] = [
     costMultiplier: 1.8,
     count: 0,
     icon: 'Flame', // Magic vibe
+    upgrades: DEFAULT_BUILDING_UPGRADES,
+    purchasedUpgrades: [],
   },
 ];
+
+export const getInitialBuildingsState = (): Building[] => 
+  INITIAL_BUILDINGS.map(b => ({
+    ...b,
+    purchasedUpgrades: [],
+    count: 0,
+  }));
 
 export const TALENTS: Talent[] = [
   {

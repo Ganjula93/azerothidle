@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Resources, Building, ResourceType, RaceId } from './types';
-import { INITIAL_RESOURCES, INITIAL_BUILDINGS, TICK_RATE_MS, SAVE_KEY, RACES, TALENTS } from './constants';
+import { Resources, Building, ResourceType, RaceId, BuildingUpgrade } from './types';
+import { INITIAL_RESOURCES, INITIAL_BUILDINGS, TICK_RATE_MS, SAVE_KEY, RACES, TALENTS, getInitialBuildingsState } from './constants';
 import ResourceCard from './components/ResourceCard';
 import ClickerArea from './components/ClickerArea';
 import BuildingShop from './components/BuildingShop';
@@ -15,7 +15,7 @@ type ViewState = 'menu' | 'game' | 'options' | 'info' | 'race_select' | 'talents
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('menu');
   const [resources, setResources] = useState<Resources>(INITIAL_RESOURCES);
-  const [buildings, setBuildings] = useState<Building[]>(INITIAL_BUILDINGS);
+  const [buildings, setBuildings] = useState<Building[]>(() => getInitialBuildingsState());
   const [raceId, setRaceId] = useState<RaceId | null>(null);
   const [eternalEssence, setEternalEssence] = useState<number>(0);
   const [talents, setTalents] = useState<Record<string, number>>({});
@@ -43,10 +43,28 @@ const App: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const serializeBuildings = (source: Building[]) => 
+    source.map(b => ({
+      id: b.id,
+      count: b.count,
+      purchasedUpgrades: b.purchasedUpgrades || [],
+    }));
+
+  const mergeBuildingsWithSave = (savedBuildings: any[]): Building[] => {
+    return getInitialBuildingsState().map(initB => {
+      const savedB = savedBuildings.find((b: any) => b.id === initB.id);
+      return {
+        ...initB,
+        count: savedB?.count ?? initB.count,
+        purchasedUpgrades: savedB?.purchasedUpgrades ?? [],
+      };
+    });
+  };
+
   const saveGame = useCallback(() => {
     const data = {
       resources,
-      buildings: buildings.map(b => ({ id: b.id, count: b.count })),
+      buildings: serializeBuildings(buildings),
       raceId,
       eternalEssence,
       talents,
@@ -68,10 +86,7 @@ const App: React.FC = () => {
         
         // Merge saved building counts
         if (parsed.buildings) {
-           const mergedBuildings = INITIAL_BUILDINGS.map(initB => {
-             const savedB = parsed.buildings.find((b: any) => b.id === initB.id);
-             return savedB ? { ...initB, count: savedB.count } : initB;
-           });
+           const mergedBuildings = mergeBuildingsWithSave(parsed.buildings);
            setBuildings(mergedBuildings);
         }
       } catch (e) {
@@ -95,7 +110,7 @@ const App: React.FC = () => {
     try {
       const data = {
         resources,
-        buildings: buildings.map(b => ({ id: b.id, count: b.count })),
+        buildings: serializeBuildings(buildings),
         raceId,
         eternalEssence,
         talents,
@@ -113,7 +128,7 @@ const App: React.FC = () => {
     try {
       const data = {
         resources,
-        buildings: buildings.map(b => ({ id: b.id, count: b.count })),
+        buildings: serializeBuildings(buildings),
         raceId,
         eternalEssence,
         talents,
@@ -159,16 +174,13 @@ const App: React.FC = () => {
       setRaceId(parsed.raceId || null);
       setTalents(parsed.talents || {});
       
-      const mergedBuildings = INITIAL_BUILDINGS.map(initB => {
-        const savedB = parsed.buildings.find((b: any) => b.id === initB.id);
-        return savedB ? { ...initB, count: savedB.count } : initB;
-      });
+      const mergedBuildings = mergeBuildingsWithSave(parsed.buildings);
       setBuildings(mergedBuildings);
       
       // Update persistent storage
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         resources: parsed.resources,
-        buildings: parsed.buildings,
+        buildings: serializeBuildings(mergedBuildings),
         raceId: parsed.raceId,
         eternalEssence: parsed.eternalEssence,
         talents: parsed.talents,
@@ -214,7 +226,7 @@ const App: React.FC = () => {
     if (window.confirm("Are you sure? This will delete your local save permanently.")) {
       localStorage.removeItem(SAVE_KEY);
       setResources(INITIAL_RESOURCES);
-      setBuildings(INITIAL_BUILDINGS);
+      setBuildings(getInitialBuildingsState());
       setRaceId(null);
       setEternalEssence(0);
       setTalents({});
@@ -225,7 +237,7 @@ const App: React.FC = () => {
 
   const startNewGame = () => {
     setResources(INITIAL_RESOURCES);
-    setBuildings(INITIAL_BUILDINGS);
+    setBuildings(getInitialBuildingsState());
     setEternalEssence(0); 
     setRaceId(null);
     setTalents({});
@@ -240,7 +252,7 @@ const App: React.FC = () => {
     
     const newSaveState = {
       resources: INITIAL_RESOURCES,
-      buildings: INITIAL_BUILDINGS.map(b => ({ id: b.id, count: 0 })),
+      buildings: INITIAL_BUILDINGS.map(b => ({ id: b.id, count: 0, purchasedUpgrades: [] })),
       raceId: selectedRaceId,
       eternalEssence: eternalEssence,
       talents: talents,
@@ -272,7 +284,7 @@ const App: React.FC = () => {
     
     setEternalEssence(prev => prev + gainedEssence);
     setResources(INITIAL_RESOURCES);
-    setBuildings(INITIAL_BUILDINGS);
+    setBuildings(getInitialBuildingsState());
     setRaceId(null); 
     
     setShowPrestigeModal(false);
@@ -304,14 +316,22 @@ const App: React.FC = () => {
 
   // --- Game Loop & Math ---
 
+  const getBuildingOutputMultiplier = (building: Building) => {
+    if (!building.upgrades || building.upgrades.length === 0) return 1;
+    return building.upgrades.reduce((mult, upgrade) => {
+      return building.purchasedUpgrades?.includes(upgrade.id) ? mult * upgrade.multiplier : mult;
+    }, 1);
+  };
+
   const getProductionRates = useCallback(() => {
     let rates = { gold: 0, wood: 0, ore: 0 };
     
     // Base Production
     buildings.forEach(b => {
-      if (b.production.gold) rates.gold += b.production.gold * b.count;
-      if (b.production.wood) rates.wood += b.production.wood * b.count;
-      if (b.production.ore) rates.ore += b.production.ore * b.count;
+      const upgradeMult = getBuildingOutputMultiplier(b);
+      if (b.production.gold) rates.gold += b.production.gold * b.count * upgradeMult;
+      if (b.production.wood) rates.wood += b.production.wood * b.count * upgradeMult;
+      if (b.production.ore) rates.ore += b.production.ore * b.count * upgradeMult;
     });
 
     // Race Modifiers
@@ -386,6 +406,17 @@ const App: React.FC = () => {
     return cost;
   };
 
+  const calculateUpgradeCost = useCallback((building: Building, upgrade: BuildingUpgrade): Resources => {
+    const scale = Math.max(1, Math.floor(upgrade.threshold / 2));
+    const discount = raceId === 'gnome' ? 0.9 : 1;
+
+    const gold = building.baseCost.gold ? Math.floor(building.baseCost.gold * scale * discount) : 0;
+    const wood = building.baseCost.wood ? Math.floor(building.baseCost.wood * scale * discount) : 0;
+    const ore = building.baseCost.ore ? Math.floor(building.baseCost.ore * scale * discount) : 0;
+
+    return { gold, wood, ore };
+  }, [raceId]);
+
   const handleBuyBuilding = (buildingId: string) => {
     const buildingIndex = buildings.findIndex(b => b.id === buildingId);
     if (buildingIndex === -1) return;
@@ -406,6 +437,42 @@ const App: React.FC = () => {
       newBuildings[buildingIndex] = { ...building, count: building.count + 1 };
       setBuildings(newBuildings);
     }
+  };
+
+  const handleBuyUpgrade = (buildingId: string, upgradeId: string) => {
+    const buildingIndex = buildings.findIndex(b => b.id === buildingId);
+    if (buildingIndex === -1) return;
+
+    const building = buildings[buildingIndex];
+    const upgrade = building.upgrades?.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+
+    const isUnlocked = building.count >= upgrade.threshold;
+    const alreadyPurchased = building.purchasedUpgrades?.includes(upgradeId);
+    if (!isUnlocked || alreadyPurchased) return;
+
+    const cost = calculateUpgradeCost(building, upgrade);
+    const canAfford = 
+      resources.gold >= cost.gold &&
+      resources.wood >= cost.wood &&
+      resources.ore >= cost.ore;
+
+    if (!canAfford) {
+      showNotification("Not enough resources for that upgrade.", 'error');
+      return;
+    }
+
+    setResources(prev => ({
+      gold: prev.gold - cost.gold,
+      wood: prev.wood - cost.wood,
+      ore: prev.ore - cost.ore,
+    }));
+
+    const newBuildings = [...buildings];
+    const purchased = building.purchasedUpgrades ? [...building.purchasedUpgrades] : [];
+    purchased.push(upgradeId);
+    newBuildings[buildingIndex] = { ...building, purchasedUpgrades: purchased };
+    setBuildings(newBuildings);
   };
 
   // --- Render Helpers ---
@@ -698,6 +765,8 @@ const App: React.FC = () => {
             currentResources={resources} 
             onBuy={handleBuyBuilding}
             calculateCost={calculateCost}
+            onBuyUpgrade={handleBuyUpgrade}
+            calculateUpgradeCost={calculateUpgradeCost}
           />
         </aside>
       </div>

@@ -33,6 +33,13 @@ export interface BuildingProduction {
   ore?: number;
 }
 
+export interface BuildingUpgrade {
+  id: string;
+  threshold: number;
+  multiplier: number;
+  icon: string;
+}
+
 export interface Building {
   id: string;
   name: string;
@@ -42,6 +49,8 @@ export interface Building {
   costMultiplier: number; // Cost increases by this factor per level
   count: number;
   icon: string; // Lucide icon name placeholder
+  upgrades?: BuildingUpgrade[];
+  purchasedUpgrades?: string[];
 }
 
 export interface Talent {

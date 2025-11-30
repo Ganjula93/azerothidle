@@ -1,18 +1,20 @@
 import React from 'react';
-import { Building, Resources, ResourceType } from '../types';
-import { Axe, Pickaxe, Store, Factory, Flame, Coins, Hammer, Shield } from 'lucide-react';
+import { Building, BuildingUpgrade, Resources, ResourceType } from '../types';
+import { Axe, Pickaxe, Store, Factory, Flame, Coins, Hammer, Shield, Sparkles, Medal, Gem, Crown } from 'lucide-react';
 
 interface BuildingShopProps {
   buildings: Building[];
   currentResources: Resources;
   onBuy: (buildingId: string) => void;
   calculateCost: (baseCost: number, multiplier: number, count: number) => number;
+  onBuyUpgrade: (buildingId: string, upgradeId: string) => void;
+  calculateUpgradeCost: (building: Building, upgrade: BuildingUpgrade) => Resources;
 }
 
-const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources, onBuy, calculateCost }) => {
+const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources, onBuy, calculateCost, onBuyUpgrade, calculateUpgradeCost }) => {
   
-  const getIcon = (iconName: string) => {
-    const props = { size: 20 };
+  const getIcon = (iconName: string, size = 20) => {
+    const props = { size };
     switch (iconName) {
       case 'Axe': return <Axe {...props} />;
       case 'Pickaxe': return <Pickaxe {...props} />;
@@ -22,6 +24,10 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
       case 'Coins': return <Coins {...props} />;
       case 'Hammer': return <Hammer {...props} />;
       case 'Shield': return <Shield {...props} />;
+      case 'Sparkles': return <Sparkles {...props} />;
+      case 'Medal': return <Medal {...props} />;
+      case 'Gem': return <Gem {...props} />;
+      case 'Crown': return <Crown {...props} />;
       default: return <Hammer {...props} />;
     }
   };
@@ -35,6 +41,14 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
         <span className="capitalize text-[10px] tracking-wider">{type === 'gold' ? 'Gold' : type === 'wood' ? 'Wood' : 'Ore'}</span>
       </span>
     );
+  };
+
+  const formatUpgradeCost = (cost: Resources) => {
+    const parts: string[] = [];
+    if (cost.gold) parts.push(`${cost.gold.toLocaleString('en-US')} Gold`);
+    if (cost.wood) parts.push(`${cost.wood.toLocaleString('en-US')} Wood`);
+    if (cost.ore) parts.push(`${cost.ore.toLocaleString('en-US')} Ore`);
+    return parts.join(' • ');
   };
 
   return (
@@ -51,6 +65,8 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
         const costGold = calculateCost(building.baseCost.gold || 0, building.costMultiplier, building.count);
         const costWood = calculateCost(building.baseCost.wood || 0, building.costMultiplier, building.count);
         const costOre = calculateCost(building.baseCost.ore || 0, building.costMultiplier, building.count);
+        const upgrades = building.upgrades || [];
+        const visibleUpgrades = upgrades.filter(upgrade => building.count >= upgrade.threshold || building.purchasedUpgrades?.includes(upgrade.id));
 
         const canAfford = 
           currentResources.gold >= costGold &&
@@ -58,10 +74,11 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
           currentResources.ore >= costOre;
 
         return (
-          <button
+          <div
             key={building.id}
-            onClick={() => onBuy(building.id)}
-            disabled={!canAfford}
+            role="button"
+            aria-disabled={!canAfford}
+            onClick={() => canAfford && onBuy(building.id)}
             className={`
               group relative flex flex-col gap-2 p-3 rounded border text-left transition-all
               ${canAfford 
@@ -100,7 +117,67 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
               {building.production.wood && <span className="text-green-500">+{building.production.wood} Wood</span>}
               {building.production.ore && <span className="text-slate-400">+{building.production.ore} Ore</span>}
             </div>
-          </button>
+            
+            {visibleUpgrades.length > 0 && (
+              <div className="mt-2 relative z-10">
+                <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1 flex items-center gap-1">
+                  <Sparkles size={12} className="text-yellow-300" />
+                  Upgrades
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {visibleUpgrades.map(upgrade => {
+                      const purchased = building.purchasedUpgrades?.includes(upgrade.id);
+                      const cost = calculateUpgradeCost(building, upgrade);
+                      const canAffordUpgrade = 
+                        currentResources.gold >= cost.gold &&
+                        currentResources.wood >= cost.wood &&
+                        currentResources.ore >= cost.ore;
+                      const statusLabel = purchased
+                        ? 'Aktiv'
+                        : canAffordUpgrade ? 'Kaufen' : 'Teuer';
+
+                      return (
+                        <div
+                          key={upgrade.id}
+                          role="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!purchased) {
+                              onBuyUpgrade(building.id, upgrade.id);
+                            }
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          className={`flex items-center gap-2 px-2 py-1 rounded border text-[10px] font-bold tracking-wide transition-all ${
+                            purchased
+                              ? 'bg-yellow-500/10 border-yellow-500 text-yellow-200'
+                              : canAffordUpgrade
+                                ? 'bg-blue-900/30 border-blue-600 text-blue-100 hover:border-yellow-400 hover:text-yellow-200'
+                                : 'bg-slate-800/60 border-slate-600 text-slate-300'
+                          }`}
+                          title={`x${upgrade.multiplier} Output${formatUpgradeCost(cost) ? ` • Cost: ${formatUpgradeCost(cost)}` : ''}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="inline-flex items-center justify-center rounded-full bg-slate-800/60 p-1">
+                              {getIcon(upgrade.icon, 14)}
+                            </span>
+                            <span>x{upgrade.multiplier}</span>
+                          </div>
+                          <span className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${
+                            purchased
+                              ? 'bg-yellow-500/20 text-yellow-100 border border-yellow-600/70'
+                              : canAffordUpgrade
+                                ? 'bg-yellow-500/10 text-yellow-200 border border-yellow-500/60'
+                                : 'bg-slate-900 text-slate-200 border border-slate-700'
+                          }`}>
+                            {statusLabel}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+          </div>
         );
       })}
     </div>
