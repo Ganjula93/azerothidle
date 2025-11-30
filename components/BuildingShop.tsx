@@ -9,9 +9,14 @@ interface BuildingShopProps {
   calculateCost: (baseCost: number, multiplier: number, count: number) => number;
   onBuyUpgrade: (buildingId: string, upgradeId: string) => void;
   calculateUpgradeCost: (building: Building, upgrade: BuildingUpgrade) => Resources;
+  getLiveProduction: (building: Building) => {
+    gold?: { perBuilding: number; total: number };
+    wood?: { perBuilding: number; total: number };
+    ore?: { perBuilding: number; total: number };
+  };
 }
 
-const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources, onBuy, calculateCost, onBuyUpgrade, calculateUpgradeCost }) => {
+const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources, onBuy, calculateCost, onBuyUpgrade, calculateUpgradeCost, getLiveProduction }) => {
   
   const getIcon = (iconName: string, size = 20) => {
     const props = { size };
@@ -67,6 +72,7 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
         const costOre = calculateCost(building.baseCost.ore || 0, building.costMultiplier, building.count);
         const upgrades = building.upgrades || [];
         const visibleUpgrades = upgrades.filter(upgrade => building.count >= upgrade.threshold || building.purchasedUpgrades?.includes(upgrade.id));
+        const liveProduction = getLiveProduction(building);
 
         const canAfford = 
           currentResources.gold >= costGold &&
@@ -100,22 +106,35 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
                   <p className="text-[10px] text-blue-300/70 leading-tight mt-0.5 max-w-[180px]">{building.description}</p>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-slate-700 font-serif select-none drop-shadow-sm group-hover:text-slate-600">
-                {building.count}
+              <div className="flex flex-col items-end gap-1 text-right">
+                <div className="text-2xl font-bold text-slate-700 font-serif select-none drop-shadow-sm group-hover:text-slate-600">
+                  {building.count}
+                </div>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {costGold > 0 && renderCost('gold', costGold)}
+                  {costWood > 0 && renderCost('wood', costWood)}
+                  {costOre > 0 && renderCost('ore', costOre)}
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 mt-2 relative z-10">
-              {costGold > 0 && renderCost('gold', costGold)}
-              {costWood > 0 && renderCost('wood', costWood)}
-              {costOre > 0 && renderCost('ore', costOre)}
-            </div>
-
-            <div className="text-[10px] text-slate-400 mt-2 flex gap-2 border-t border-slate-700/50 pt-1">
-              <span className="uppercase tracking-widest text-slate-500">Yield:</span>
-              {building.production.gold && <span className="text-yellow-500">+{building.production.gold} Gold</span>}
-              {building.production.wood && <span className="text-green-500">+{building.production.wood} Wood</span>}
-              {building.production.ore && <span className="text-slate-400">+{building.production.ore} Ore</span>}
+            <div className="text-[10px] text-slate-400 mt-2 flex flex-col gap-1 border-t border-slate-700/50 pt-1">
+              <span className="uppercase tracking-widest text-slate-500">Yield (live):</span>
+              {liveProduction.gold && (
+                <span className="text-yellow-400 font-semibold">
+                  +{liveProduction.gold.perBuilding.toFixed(2)} Gold <span className="text-slate-400">(Total {liveProduction.gold.total.toFixed(2)})</span>
+                </span>
+              )}
+              {liveProduction.wood && (
+                <span className="text-green-400 font-semibold">
+                  +{liveProduction.wood.perBuilding.toFixed(2)} Wood <span className="text-slate-400">(Total {liveProduction.wood.total.toFixed(2)})</span>
+                </span>
+              )}
+              {liveProduction.ore && (
+                <span className="text-slate-300 font-semibold">
+                  +{liveProduction.ore.perBuilding.toFixed(2)} Ore <span className="text-slate-500">(Total {liveProduction.ore.total.toFixed(2)})</span>
+                </span>
+              )}
             </div>
             
             {visibleUpgrades.length > 0 && (
@@ -135,6 +154,7 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
                       const statusLabel = purchased
                         ? 'Aktiv'
                         : canAffordUpgrade ? 'Kaufen' : 'Teuer';
+                      const costLabel = formatUpgradeCost(cost);
 
                       return (
                         <div
@@ -147,30 +167,37 @@ const BuildingShop: React.FC<BuildingShopProps> = ({ buildings, currentResources
                             }
                           }}
                           onMouseDown={(e) => e.stopPropagation()}
-                          className={`flex items-center gap-2 px-2 py-1 rounded border text-[10px] font-bold tracking-wide transition-all ${
+                          className={`flex flex-col items-start gap-1 px-2 py-1 rounded border text-[10px] font-bold tracking-wide transition-all ${
                             purchased
                               ? 'bg-yellow-500/10 border-yellow-500 text-yellow-200'
                               : canAffordUpgrade
                                 ? 'bg-blue-900/30 border-blue-600 text-blue-100 hover:border-yellow-400 hover:text-yellow-200'
                                 : 'bg-slate-800/60 border-slate-600 text-slate-300'
                           }`}
-                          title={`x${upgrade.multiplier} Output${formatUpgradeCost(cost) ? ` • Cost: ${formatUpgradeCost(cost)}` : ''}`}
+                          title={`x${upgrade.multiplier} Output${costLabel ? ` • Cost: ${costLabel}` : ''}`}
                         >
-                          <div className="flex items-center gap-1">
-                            <span className="inline-flex items-center justify-center rounded-full bg-slate-800/60 p-1">
-                              {getIcon(upgrade.icon, 14)}
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              <span className="inline-flex items-center justify-center rounded-full bg-slate-800/60 p-1">
+                                {getIcon(upgrade.icon, 14)}
+                              </span>
+                              <span>x{upgrade.multiplier}</span>
+                            </div>
+                            <span className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${
+                              purchased
+                                ? 'bg-yellow-500/20 text-yellow-100 border border-yellow-600/70'
+                                : canAffordUpgrade
+                                  ? 'bg-yellow-500/10 text-yellow-200 border border-yellow-500/60'
+                                  : 'bg-slate-900 text-slate-200 border border-slate-700'
+                            }`}>
+                              {statusLabel}
                             </span>
-                            <span>x{upgrade.multiplier}</span>
                           </div>
-                          <span className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded ${
-                            purchased
-                              ? 'bg-yellow-500/20 text-yellow-100 border border-yellow-600/70'
-                              : canAffordUpgrade
-                                ? 'bg-yellow-500/10 text-yellow-200 border border-yellow-500/60'
-                                : 'bg-slate-900 text-slate-200 border border-slate-700'
-                          }`}>
-                            {statusLabel}
-                          </span>
+                          {!purchased && costLabel && (
+                            <span className="text-[9px] font-semibold text-slate-300 leading-tight">
+                              {costLabel}
+                            </span>
+                          )}
                         </div>
                       );
                     })}

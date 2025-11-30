@@ -147,9 +147,9 @@ const TalentTree: React.FC<TalentTreeProps> = ({
                 `}
               >
                 <div className="flex flex-col items-center leading-none gap-1">
-                  <span className="text-[10px] opacity-80">Reset now for:</span>
+                  <span className="text-[10px] opacity-80">Reset now</span>
                   <span className="text-lg flex items-center gap-2">
-                    <Sparkles size={16} /> +{potentialEssence} Essence
+                    <Sparkles size={16} /> Ascend (+{potentialEssence} Essence)
                   </span>
                 </div>
             </button>

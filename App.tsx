@@ -323,6 +323,42 @@ const App: React.FC = () => {
     }, 1);
   };
 
+  const getResourceMultiplier = useCallback((resource: ResourceType) => {
+    let mult = 1;
+
+    if (resource === 'gold' && raceId === 'human') mult *= 1.1;
+    if (resource === 'ore' && raceId === 'dwarf') mult *= 1.1;
+    if (resource === 'wood' && raceId === 'nelf') mult *= 1.1;
+
+    mult *= 1 + (eternalEssence * 0.1);
+
+    const kingsHonorLevel = talents['kings_honor'] || 0;
+    const globalTalentMult = 1 + (kingsHonorLevel * 0.05);
+    
+    const oreTalentLevel = talents['deep_mining'] || 0;
+    const woodTalentLevel = talents['elven_grace'] || 0;
+    const goldTalentLevel = talents['goblin_deals'] || 0;
+
+    if (resource === 'gold') mult *= globalTalentMult * (1 + (goldTalentLevel * 0.1));
+    if (resource === 'wood') mult *= globalTalentMult * (1 + (woodTalentLevel * 0.1));
+    if (resource === 'ore') mult *= globalTalentMult * (1 + (oreTalentLevel * 0.1));
+
+    return mult;
+  }, [raceId, eternalEssence, talents]);
+
+  const getBuildingLiveProduction = useCallback((building: Building) => {
+    const upgradeMult = getBuildingOutputMultiplier(building);
+    const gold = building.production.gold ? building.production.gold * upgradeMult * getResourceMultiplier('gold') : 0;
+    const wood = building.production.wood ? building.production.wood * upgradeMult * getResourceMultiplier('wood') : 0;
+    const ore = building.production.ore ? building.production.ore * upgradeMult * getResourceMultiplier('ore') : 0;
+
+    return {
+      gold: gold > 0 ? { perBuilding: gold, total: gold * building.count } : undefined,
+      wood: wood > 0 ? { perBuilding: wood, total: wood * building.count } : undefined,
+      ore: ore > 0 ? { perBuilding: ore, total: ore * building.count } : undefined,
+    };
+  }, [getResourceMultiplier]);
+
   const getProductionRates = useCallback(() => {
     let rates = { gold: 0, wood: 0, ore: 0 };
     
@@ -547,7 +583,7 @@ const App: React.FC = () => {
                   onClick={confirmPrestige}
                   className="flex-1 py-3 rounded bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-wide transition-colors shadow-lg shadow-purple-900/50"
                 >
-                  Ascend
+                  Ascend (+{potentialEssence})
                 </button>
               </div>
             </div>
@@ -716,11 +752,14 @@ const App: React.FC = () => {
            {/* Essence / Talent Button */}
            <button 
              onClick={() => { saveGame(); setView('talents'); }}
-             className="flex items-center gap-2 px-3 h-10 bg-purple-900/40 hover:bg-purple-800/60 text-purple-300 hover:text-purple-100 rounded border border-purple-800 hover:border-purple-500 transition-all shadow-sm"
-             title="Talent Tree"
+            className="flex items-center gap-2 px-3 h-10 bg-purple-900/40 hover:bg-purple-800/60 text-purple-300 hover:text-purple-100 rounded border border-purple-800 hover:border-purple-500 transition-all shadow-sm"
+            title="Talent Tree"
            >
              <Sparkles size={16} /> 
-             <span className="font-bold font-mono">{eternalEssence}</span>
+             <span className="font-bold font-mono flex items-center gap-1 leading-none">
+               <span className="text-lg">{eternalEssence}</span>
+               <span className="text-xs text-purple-200/80">( +{potentialEssence} )</span>
+             </span>
            </button>
 
            {/* Settings / Cog Button */}
@@ -767,6 +806,7 @@ const App: React.FC = () => {
             calculateCost={calculateCost}
             onBuyUpgrade={handleBuyUpgrade}
             calculateUpgradeCost={calculateUpgradeCost}
+            getLiveProduction={getBuildingLiveProduction}
           />
         </aside>
       </div>
