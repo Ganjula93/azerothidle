@@ -11,11 +11,11 @@ export const INITIAL_RESOURCES: Resources = {
 };
 
 export const DEFAULT_BUILDING_UPGRADES: BuildingUpgrade[] = [
-  { id: 'upgrade_10', threshold: 10, multiplier: 2, icon: 'Sparkles' },
-  { id: 'upgrade_25', threshold: 25, multiplier: 2, icon: 'Medal' },
-  { id: 'upgrade_50', threshold: 50, multiplier: 3, icon: 'Gem' },
-  { id: 'upgrade_75', threshold: 75, multiplier: 3, icon: 'Flame' },
-  { id: 'upgrade_100', threshold: 100, multiplier: 4, icon: 'Crown' },
+  { id: 'upgrade_10', threshold: 10, multiplier: 1.5, icon: 'Sparkles' },
+  { id: 'upgrade_25', threshold: 25, multiplier: 1.6, icon: 'Medal' },
+  { id: 'upgrade_50', threshold: 50, multiplier: 1.8, icon: 'Gem' },
+  { id: 'upgrade_75', threshold: 75, multiplier: 2.0, icon: 'Flame' },
+  { id: 'upgrade_100', threshold: 100, multiplier: 2.2, icon: 'Crown' },
 ];
 
 export const RACES: Race[] = [
@@ -66,9 +66,9 @@ export const INITIAL_BUILDINGS: Building[] = [
     id: 'peasant',
     name: 'Laborer',
     description: '"Ready to work!" A simple laborer of the Alliance.',
-    baseCost: { gold: 10 },
+    baseCost: { gold: 8 },
     production: { wood: 1 },
-    costMultiplier: 1.5,
+    costMultiplier: 1.35,
     count: 0,
     icon: 'Pickaxe', // Represents the peasant's tool
     upgrades: DEFAULT_BUILDING_UPGRADES,
@@ -78,9 +78,9 @@ export const INITIAL_BUILDINGS: Building[] = [
     id: 'lumber_mill',
     name: 'Lumber Mill',
     description: 'Processes timber from the surrounding forests.',
-    baseCost: { gold: 50, wood: 25 },
+    baseCost: { gold: 35, wood: 15 },
     production: { wood: 5 },
-    costMultiplier: 1.6,
+    costMultiplier: 1.4,
     count: 0,
     icon: 'Axe',
     upgrades: DEFAULT_BUILDING_UPGRADES,
@@ -90,9 +90,9 @@ export const INITIAL_BUILDINGS: Building[] = [
     id: 'blacksmith',
     name: 'Blacksmith',
     description: 'Forges weapons and armor for the soldiers.',
-    baseCost: { wood: 150, gold: 100 },
+    baseCost: { wood: 120, gold: 80 },
     production: { ore: 2 },
-    costMultiplier: 1.4,
+    costMultiplier: 1.3,
     count: 0,
     icon: 'Hammer', // Anvil/Hammer vibe
     upgrades: DEFAULT_BUILDING_UPGRADES,
@@ -102,9 +102,9 @@ export const INITIAL_BUILDINGS: Building[] = [
     id: 'inn',
     name: 'Inn',
     description: 'A place of rest. Generates Gold from travelers.',
-    baseCost: { wood: 400, ore: 100 },
+    baseCost: { wood: 280, ore: 80 },
     production: { gold: 5 },
-    costMultiplier: 1.5,
+    costMultiplier: 1.4,
     count: 0,
     icon: 'Store', // Beer/Inn vibe
     upgrades: DEFAULT_BUILDING_UPGRADES,
@@ -114,9 +114,9 @@ export const INITIAL_BUILDINGS: Building[] = [
     id: 'barracks',
     name: 'Barracks',
     description: 'Trains footmen who return with loot from monsters.',
-    baseCost: { gold: 1000, wood: 800, ore: 300 },
+    baseCost: { gold: 800, wood: 650, ore: 240 },
     production: { gold: 15 },
-    costMultiplier: 1.6,
+    costMultiplier: 1.5,
     count: 0,
     icon: 'Shield', 
     upgrades: DEFAULT_BUILDING_UPGRADES,
@@ -126,9 +126,9 @@ export const INITIAL_BUILDINGS: Building[] = [
     id: 'mage_tower',
     name: 'Mage Tower',
     description: 'The Arcane Arts transmute matter into value.',
-    baseCost: { gold: 5000, ore: 2000 },
+    baseCost: { gold: 3800, ore: 1500 },
     production: { ore: 20, gold: 20, wood: 20 },
-    costMultiplier: 1.8,
+    costMultiplier: 1.6,
     count: 0,
     icon: 'Flame', // Magic vibe
     upgrades: DEFAULT_BUILDING_UPGRADES,
@@ -187,35 +187,35 @@ export const TALENTS: Talent[] = [
 ];
 
 const HUMAN_UNITS: Unit[] = [
-  { id: 'human_footman', name: 'Footman', description: 'Shielded soldier of Stormwind.', baseCost: { gold: 150, wood: 40 }, costMultiplier: 1.35, count: 0, icon: 'Shield', role: 'melee', attack: 15, health: 120 },
-  { id: 'human_rifleman', name: 'Rifleman', description: 'Ranged support with high accuracy.', baseCost: { gold: 140, wood: 80 }, costMultiplier: 1.4, count: 0, icon: 'Target', role: 'ranged', attack: 22, health: 90 },
-  { id: 'human_mage', name: 'Battle Mage', description: 'Harnesses arcane power to obliterate foes.', baseCost: { gold: 200, ore: 100 }, costMultiplier: 1.45, count: 0, icon: 'Sparkles', role: 'caster', attack: 30, health: 70 },
-  { id: 'human_gryphon', name: 'Gryphon Rider', description: 'Aerial unit striking from above.', baseCost: { gold: 320, wood: 160, ore: 80 }, costMultiplier: 1.5, count: 0, icon: 'Bird', role: 'flying', attack: 28, health: 110 },
-  { id: 'human_siege', name: 'Siege Engine', description: 'Heavy tank for demolishing fortifications.', baseCost: { gold: 420, wood: 220, ore: 180 }, costMultiplier: 1.55, count: 0, icon: 'Truck', role: 'siege', attack: 40, health: 300 },
+  { id: 'human_footman', name: 'Footman', description: 'Shielded soldier of Stormwind.', baseCost: { gold: 150, wood: 40 }, costMultiplier: 1.35, count: 0, icon: 'Shield', role: 'melee', attack: 15, defense: 10, health: 120 },
+  { id: 'human_rifleman', name: 'Rifleman', description: 'Ranged support with high accuracy.', baseCost: { gold: 140, wood: 80 }, costMultiplier: 1.4, count: 0, icon: 'Target', role: 'ranged', attack: 22, defense: 6, health: 90 },
+  { id: 'human_mage', name: 'Battle Mage', description: 'Harnesses arcane power to obliterate foes.', baseCost: { gold: 200, ore: 100 }, costMultiplier: 1.45, count: 0, icon: 'Sparkles', role: 'caster', attack: 30, defense: 5, health: 70 },
+  { id: 'human_gryphon', name: 'Gryphon Rider', description: 'Aerial unit striking from above.', baseCost: { gold: 320, wood: 160, ore: 80 }, costMultiplier: 1.5, count: 0, icon: 'Bird', role: 'flying', attack: 28, defense: 12, health: 110 },
+  { id: 'human_siege', name: 'Siege Engine', description: 'Heavy tank for demolishing fortifications.', baseCost: { gold: 420, wood: 220, ore: 180 }, costMultiplier: 1.55, count: 0, icon: 'Truck', role: 'siege', attack: 40, defense: 25, health: 300 },
 ];
 
 const DWARF_UNITS: Unit[] = [
-  { id: 'dwarf_mountaineer', name: 'Mountaineer', description: 'Stout melee defender.', baseCost: { gold: 130, wood: 50 }, costMultiplier: 1.35, count: 0, icon: 'Pickaxe', role: 'melee', attack: 16, health: 140 },
-  { id: 'dwarf_rifle', name: 'Rifle Corps', description: 'Deadly precision with firearms.', baseCost: { gold: 160, wood: 70, ore: 30 }, costMultiplier: 1.4, count: 0, icon: 'Crosshair', role: 'ranged', attack: 24, health: 95 },
-  { id: 'dwarf_runepriest', name: 'Rune Priest', description: 'Runic caster bolstering the ranks.', baseCost: { gold: 210, ore: 120 }, costMultiplier: 1.45, count: 0, icon: 'Flame', role: 'caster', attack: 26, health: 85 },
-  { id: 'dwarf_gyro', name: 'Gyrocopter', description: 'Flying machine with bombs.', baseCost: { gold: 280, wood: 140, ore: 140 }, costMultiplier: 1.5, count: 0, icon: 'Plane', role: 'flying', attack: 27, health: 125 },
-  { id: 'dwarf_siege', name: 'Siege Tank', description: 'Steam-powered armor that shreds walls.', baseCost: { gold: 450, wood: 200, ore: 220 }, costMultiplier: 1.55, count: 0, icon: 'Shield', role: 'siege', attack: 42, health: 320 },
+  { id: 'dwarf_mountaineer', name: 'Mountaineer', description: 'Stout melee defender.', baseCost: { gold: 130, wood: 50 }, costMultiplier: 1.35, count: 0, icon: 'Pickaxe', role: 'melee', attack: 16, defense: 14, health: 140 },
+  { id: 'dwarf_rifle', name: 'Rifle Corps', description: 'Deadly precision with firearms.', baseCost: { gold: 160, wood: 70, ore: 30 }, costMultiplier: 1.4, count: 0, icon: 'Crosshair', role: 'ranged', attack: 24, defense: 8, health: 95 },
+  { id: 'dwarf_runepriest', name: 'Rune Priest', description: 'Runic caster bolstering the ranks.', baseCost: { gold: 210, ore: 120 }, costMultiplier: 1.45, count: 0, icon: 'Flame', role: 'caster', attack: 26, defense: 7, health: 85 },
+  { id: 'dwarf_gyro', name: 'Gyrocopter', description: 'Flying machine with bombs.', baseCost: { gold: 280, wood: 140, ore: 140 }, costMultiplier: 1.5, count: 0, icon: 'Plane', role: 'flying', attack: 27, defense: 11, health: 125 },
+  { id: 'dwarf_siege', name: 'Siege Tank', description: 'Steam-powered armor that shreds walls.', baseCost: { gold: 450, wood: 200, ore: 220 }, costMultiplier: 1.55, count: 0, icon: 'Shield', role: 'siege', attack: 42, defense: 28, health: 320 },
 ];
 
 const NELF_UNITS: Unit[] = [
-  { id: 'nelf_sentinel', name: 'Sentinel', description: 'Agile frontliner of the Sisterhood.', baseCost: { gold: 120, wood: 60 }, costMultiplier: 1.35, count: 0, icon: 'Swords', role: 'melee', attack: 17, health: 110 },
-  { id: 'nelf_archer', name: 'Archer', description: 'Silent ranged eliminator.', baseCost: { gold: 110, wood: 90 }, costMultiplier: 1.4, count: 0, icon: 'Crosshair', role: 'ranged', attack: 23, health: 85 },
-  { id: 'nelf_druid', name: 'Druid', description: 'Nature magic and healing.', baseCost: { gold: 190, wood: 80, ore: 60 }, costMultiplier: 1.45, count: 0, icon: 'Leaf', role: 'caster', attack: 24, health: 80 },
-  { id: 'nelf_hippo', name: 'Hippogryph Rider', description: 'Swift aerial strike unit.', baseCost: { gold: 260, wood: 180, ore: 60 }, costMultiplier: 1.5, count: 0, icon: 'Bird', role: 'flying', attack: 26, health: 115 },
-  { id: 'nelf_ancient', name: 'Ancient Protector', description: 'Living siege golem of the forest.', baseCost: { gold: 380, wood: 260, ore: 140 }, costMultiplier: 1.55, count: 0, icon: 'Trees', role: 'siege', attack: 38, health: 290 },
+  { id: 'nelf_sentinel', name: 'Sentinel', description: 'Agile frontliner of the Sisterhood.', baseCost: { gold: 120, wood: 60 }, costMultiplier: 1.35, count: 0, icon: 'Swords', role: 'melee', attack: 17, defense: 11, health: 110 },
+  { id: 'nelf_archer', name: 'Archer', description: 'Silent ranged eliminator.', baseCost: { gold: 110, wood: 90 }, costMultiplier: 1.4, count: 0, icon: 'Crosshair', role: 'ranged', attack: 23, defense: 7, health: 85 },
+  { id: 'nelf_druid', name: 'Druid', description: 'Nature magic and healing.', baseCost: { gold: 190, wood: 80, ore: 60 }, costMultiplier: 1.45, count: 0, icon: 'Leaf', role: 'caster', attack: 24, defense: 9, health: 80 },
+  { id: 'nelf_hippo', name: 'Hippogryph Rider', description: 'Swift aerial strike unit.', baseCost: { gold: 260, wood: 180, ore: 60 }, costMultiplier: 1.5, count: 0, icon: 'Bird', role: 'flying', attack: 26, defense: 12, health: 115 },
+  { id: 'nelf_ancient', name: 'Ancient Protector', description: 'Living siege golem of the forest.', baseCost: { gold: 380, wood: 260, ore: 140 }, costMultiplier: 1.55, count: 0, icon: 'Trees', role: 'siege', attack: 38, defense: 26, health: 290 },
 ];
 
 const GNOME_UNITS: Unit[] = [
-  { id: 'gnome_tinkerer', name: 'Tinkerer', description: 'Gadgeteer with explosive surprises.', baseCost: { gold: 130, wood: 50 }, costMultiplier: 1.35, count: 0, icon: 'Cog', role: 'melee', attack: 15, health: 105 },
-  { id: 'gnome_gunner', name: 'Gunner', description: 'Rapid-fire mechanized shooter.', baseCost: { gold: 150, wood: 70, ore: 40 }, costMultiplier: 1.4, count: 0, icon: 'Zap', role: 'ranged', attack: 25, health: 85 },
-  { id: 'gnome_arcanist', name: 'Arcanist', description: 'Tech-infused sorcery.', baseCost: { gold: 200, ore: 110 }, costMultiplier: 1.45, count: 0, icon: 'Sparkles', role: 'caster', attack: 28, health: 75 },
-  { id: 'gnome_copter', name: 'Copter Pilot', description: 'Experimental rotorcraft strike unit.', baseCost: { gold: 240, wood: 150, ore: 90 }, costMultiplier: 1.5, count: 0, icon: 'Plane', role: 'flying', attack: 27, health: 120 },
-  { id: 'gnome_mech', name: 'War Mech', description: 'Heavy golem suit with cannons.', baseCost: { gold: 420, wood: 210, ore: 220 }, costMultiplier: 1.55, count: 0, icon: 'Bot', role: 'siege', attack: 44, health: 310 },
+  { id: 'gnome_tinkerer', name: 'Tinkerer', description: 'Gadgeteer with explosive surprises.', baseCost: { gold: 130, wood: 50 }, costMultiplier: 1.35, count: 0, icon: 'Cog', role: 'melee', attack: 15, defense: 9, health: 105 },
+  { id: 'gnome_gunner', name: 'Gunner', description: 'Rapid-fire mechanized shooter.', baseCost: { gold: 150, wood: 70, ore: 40 }, costMultiplier: 1.4, count: 0, icon: 'Zap', role: 'ranged', attack: 25, defense: 6, health: 85 },
+  { id: 'gnome_arcanist', name: 'Arcanist', description: 'Tech-infused sorcery.', baseCost: { gold: 200, ore: 110 }, costMultiplier: 1.45, count: 0, icon: 'Sparkles', role: 'caster', attack: 28, defense: 7, health: 75 },
+  { id: 'gnome_copter', name: 'Copter Pilot', description: 'Experimental rotorcraft strike unit.', baseCost: { gold: 240, wood: 150, ore: 90 }, costMultiplier: 1.5, count: 0, icon: 'Plane', role: 'flying', attack: 27, defense: 10, health: 120 },
+  { id: 'gnome_mech', name: 'War Mech', description: 'Heavy golem suit with cannons.', baseCost: { gold: 420, wood: 210, ore: 220 }, costMultiplier: 1.55, count: 0, icon: 'Bot', role: 'siege', attack: 44, defense: 24, health: 310 },
 ];
 
 export const getInitialUnitsForRace = (raceId: RaceId | null): Unit[] => {

@@ -53,20 +53,6 @@ export interface Building {
   purchasedUpgrades?: string[];
 }
 
-export interface Unit {
-  id: string;
-  name: string;
-  description: string;
-  baseCost: BuildingCost;
-  costMultiplier: number;
-  count: number;
-  icon: string;
-  role: 'melee' | 'ranged' | 'caster' | 'flying' | 'siege';
-  attack: number;
-  health: number;
-  defense: number;
-}
-
 export interface Talent {
   id: string;
   name: string;
@@ -80,7 +66,6 @@ export interface Talent {
 export interface GameState {
   resources: Resources;
   buildings: Building[];
-  units: Unit[];
   lastTick: number;
   race: RaceId | null;
   eternalEssence: number;
