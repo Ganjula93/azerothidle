@@ -1,24 +1,21 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Resources, Building, ResourceType, RaceId, BuildingUpgrade, Unit } from './types';
-import { INITIAL_RESOURCES, INITIAL_BUILDINGS, TICK_RATE_MS, SAVE_KEY, RACES, TALENTS, getInitialBuildingsState, getInitialUnitsForRace } from './constants';
+import { Resources, Building, ResourceType, RaceId, BuildingUpgrade } from './types';
+import { INITIAL_RESOURCES, INITIAL_BUILDINGS, TICK_RATE_MS, SAVE_KEY, RACES, TALENTS, getInitialBuildingsState } from './constants';
 import ResourceCard from './components/ResourceCard';
 import ClickerArea from './components/ClickerArea';
 import BuildingShop from './components/BuildingShop';
 import MainMenu from './components/MainMenu';
 import RaceSelection from './components/RaceSelection';
 import TalentTree from './components/TalentTree';
-import { Shield, LogOut, ArrowLeft, Download, Upload, Trash2, CheckCircle, AlertCircle, Copy, Sparkles, FileDown, FileUp, Settings, Bird, Truck, Target, Crosshair, Plane, Swords, Trees, Cog, Bot, Zap, Pickaxe, Flame } from 'lucide-react';
+import { Shield, LogOut, ArrowLeft, Download, Upload, Trash2, CheckCircle, AlertCircle, Copy, Sparkles, FileDown, FileUp, Settings } from 'lucide-react';
 
 type ViewState = 'menu' | 'game' | 'options' | 'info' | 'race_select' | 'talents';
-type GameTab = 'city' | 'battle';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('menu');
-  const [gameTab, setGameTab] = useState<GameTab>('city');
   const [resources, setResources] = useState<Resources>(INITIAL_RESOURCES);
   const [buildings, setBuildings] = useState<Building[]>(() => getInitialBuildingsState());
-  const [units, setUnits] = useState<Unit[]>([]);
   const [raceId, setRaceId] = useState<RaceId | null>(null);
   const [eternalEssence, setEternalEssence] = useState<number>(0);
   const [talents, setTalents] = useState<Record<string, number>>({});
@@ -53,12 +50,6 @@ const App: React.FC = () => {
       purchasedUpgrades: b.purchasedUpgrades || [],
     }));
 
-  const serializeUnits = (source: Unit[]) =>
-    source.map(u => ({
-      id: u.id,
-      count: u.count,
-    }));
-
   const mergeBuildingsWithSave = (savedBuildings: any[]): Building[] => {
     return getInitialBuildingsState().map(initB => {
       const savedB = savedBuildings.find((b: any) => b.id === initB.id);
@@ -70,23 +61,10 @@ const App: React.FC = () => {
     });
   };
 
-  const mergeUnitsWithSave = (raceIdToUse: RaceId | null, savedUnits?: any[]): Unit[] => {
-    const baseUnits = getInitialUnitsForRace(raceIdToUse);
-    if (!savedUnits) return baseUnits;
-    return baseUnits.map(unit => {
-      const saved = savedUnits.find((u: any) => u.id === unit.id);
-      return {
-        ...unit,
-        count: saved?.count ?? unit.count,
-      };
-    });
-  };
-
   const saveGame = useCallback(() => {
     const data = {
       resources,
       buildings: serializeBuildings(buildings),
-      units: serializeUnits(units),
       raceId,
       eternalEssence,
       talents,
@@ -133,7 +111,6 @@ const App: React.FC = () => {
       const data = {
         resources,
         buildings: serializeBuildings(buildings),
-        units: serializeUnits(units),
         raceId,
         eternalEssence,
         talents,
@@ -152,7 +129,6 @@ const App: React.FC = () => {
       const data = {
         resources,
         buildings: serializeBuildings(buildings),
-        units: serializeUnits(units),
         raceId,
         eternalEssence,
         talents,
@@ -197,7 +173,6 @@ const App: React.FC = () => {
       setEternalEssence(parsed.eternalEssence || 0);
       setRaceId(parsed.raceId || null);
       setTalents(parsed.talents || {});
-      setUnits(mergeUnitsWithSave(parsed.raceId || null, parsed.units));
       
       const mergedBuildings = mergeBuildingsWithSave(parsed.buildings);
       setBuildings(mergedBuildings);
@@ -206,7 +181,6 @@ const App: React.FC = () => {
       localStorage.setItem(SAVE_KEY, JSON.stringify({
         resources: parsed.resources,
         buildings: serializeBuildings(mergedBuildings),
-        units: serializeUnits(mergeUnitsWithSave(parsed.raceId || null, parsed.units)),
         raceId: parsed.raceId,
         eternalEssence: parsed.eternalEssence,
         talents: parsed.talents,
@@ -253,7 +227,6 @@ const App: React.FC = () => {
       localStorage.removeItem(SAVE_KEY);
       setResources(INITIAL_RESOURCES);
       setBuildings(getInitialBuildingsState());
-      setUnits(getInitialUnitsForRace(raceId));
       setRaceId(null);
       setEternalEssence(0);
       setTalents({});
@@ -265,7 +238,6 @@ const App: React.FC = () => {
   const startNewGame = () => {
     setResources(INITIAL_RESOURCES);
     setBuildings(getInitialBuildingsState());
-    setUnits([]);
     setEternalEssence(0); 
     setRaceId(null);
     setTalents({});
@@ -276,13 +248,11 @@ const App: React.FC = () => {
 
   const handleRaceSelection = (selectedRaceId: RaceId) => {
     setRaceId(selectedRaceId);
-    setUnits(getInitialUnitsForRace(selectedRaceId));
     setResources(INITIAL_RESOURCES); 
     
     const newSaveState = {
       resources: INITIAL_RESOURCES,
       buildings: INITIAL_BUILDINGS.map(b => ({ id: b.id, count: 0, purchasedUpgrades: [] })),
-      units: getInitialUnitsForRace(selectedRaceId).map(u => ({ id: u.id, count: 0 })),
       raceId: selectedRaceId,
       eternalEssence: eternalEssence,
       talents: talents,
@@ -315,7 +285,6 @@ const App: React.FC = () => {
     setEternalEssence(prev => prev + gainedEssence);
     setResources(INITIAL_RESOURCES);
     setBuildings(getInitialBuildingsState());
-    setUnits([]);
     setRaceId(null); 
     
     setShowPrestigeModal(false);
@@ -352,64 +321,6 @@ const App: React.FC = () => {
     return building.upgrades.reduce((mult, upgrade) => {
       return building.purchasedUpgrades?.includes(upgrade.id) ? mult * upgrade.multiplier : mult;
     }, 1);
-  };
-
-  const getResourceMultiplier = useCallback((resource: ResourceType) => {
-    let mult = 1;
-
-    if (resource === 'gold' && raceId === 'human') mult *= 1.1;
-    if (resource === 'ore' && raceId === 'dwarf') mult *= 1.1;
-    if (resource === 'wood' && raceId === 'nelf') mult *= 1.1;
-
-    mult *= 1 + (eternalEssence * 0.1);
-
-    const kingsHonorLevel = talents['kings_honor'] || 0;
-    const globalTalentMult = 1 + (kingsHonorLevel * 0.05);
-    
-    const oreTalentLevel = talents['deep_mining'] || 0;
-    const woodTalentLevel = talents['elven_grace'] || 0;
-    const goldTalentLevel = talents['goblin_deals'] || 0;
-
-    if (resource === 'gold') mult *= globalTalentMult * (1 + (goldTalentLevel * 0.1));
-    if (resource === 'wood') mult *= globalTalentMult * (1 + (woodTalentLevel * 0.1));
-    if (resource === 'ore') mult *= globalTalentMult * (1 + (oreTalentLevel * 0.1));
-
-    return mult;
-  }, [raceId, eternalEssence, talents]);
-
-  const getBuildingLiveProduction = useCallback((building: Building) => {
-    const upgradeMult = getBuildingOutputMultiplier(building);
-    const gold = building.production.gold ? building.production.gold * upgradeMult * getResourceMultiplier('gold') : 0;
-    const wood = building.production.wood ? building.production.wood * upgradeMult * getResourceMultiplier('wood') : 0;
-    const ore = building.production.ore ? building.production.ore * upgradeMult * getResourceMultiplier('ore') : 0;
-
-    return {
-      gold: gold > 0 ? { perBuilding: gold, total: gold * building.count } : undefined,
-      wood: wood > 0 ? { perBuilding: wood, total: wood * building.count } : undefined,
-      ore: ore > 0 ? { perBuilding: ore, total: ore * building.count } : undefined,
-    };
-  }, [getResourceMultiplier]);
-
-  const getUnitIcon = (iconName: string, size = 24) => {
-    const props = { size };
-    switch (iconName) {
-      case 'Shield': return <Shield {...props} />;
-      case 'Target': return <Target {...props} />;
-      case 'Sparkles': return <Sparkles {...props} />;
-      case 'Bird': return <Bird {...props} />;
-      case 'Truck': return <Truck {...props} />;
-      case 'Pickaxe': return <Pickaxe {...props} />;
-      case 'Crosshair': return <Crosshair {...props} />;
-      case 'Flame': return <Flame {...props} />;
-      case 'Plane': return <Plane {...props} />;
-      case 'Swords': return <Swords {...props} />;
-      case 'Leaf': return <Trees {...props} />;
-      case 'Trees': return <Trees {...props} />;
-      case 'Cog': return <Cog {...props} />;
-      case 'Zap': return <Zap {...props} />;
-      case 'Bot': return <Bot {...props} />;
-      default: return <Shield {...props} />;
-    }
   };
 
   const getProductionRates = useCallback(() => {
@@ -564,32 +475,6 @@ const App: React.FC = () => {
     setBuildings(newBuildings);
   };
 
-  const handleRecruitUnit = (unitId: string) => {
-    const unitIndex = units.findIndex(u => u.id === unitId);
-    if (unitIndex === -1) return;
-
-    const unit = units[unitIndex];
-    const costGold = calculateCost(unit.baseCost.gold || 0, unit.costMultiplier, unit.count);
-    const costWood = calculateCost(unit.baseCost.wood || 0, unit.costMultiplier, unit.count);
-    const costOre = calculateCost(unit.baseCost.ore || 0, unit.costMultiplier, unit.count);
-
-    const canAfford = resources.gold >= costGold && resources.wood >= costWood && resources.ore >= costOre;
-    if (!canAfford) {
-      showNotification("Not enough resources to recruit that unit.", 'error');
-      return;
-    }
-
-    setResources(prev => ({
-      gold: prev.gold - costGold,
-      wood: prev.wood - costWood,
-      ore: prev.ore - costOre,
-    }));
-
-    const updated = [...units];
-    updated[unitIndex] = { ...unit, count: unit.count + 1 };
-    setUnits(updated);
-  };
-
   // --- Render Helpers ---
   
   const renderNotification = () => {
@@ -662,7 +547,7 @@ const App: React.FC = () => {
                   onClick={confirmPrestige}
                   className="flex-1 py-3 rounded bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-wide transition-colors shadow-lg shadow-purple-900/50"
                 >
-                  Ascend (+{potentialEssence})
+                  Ascend
                 </button>
               </div>
             </div>
@@ -825,52 +710,17 @@ const App: React.FC = () => {
             <div className="flex items-center gap-2 text-blue-200 text-xs font-semibold tracking-wider">
               <span className="bg-blue-900/80 px-2 py-0.5 rounded border border-blue-700 uppercase">{currentRaceConfig?.name || 'Unknown'}</span>
             </div>
-            <div className="flex gap-3 mt-3">
-              <button
-                onClick={() => setGameTab('city')}
-                className={`relative px-5 py-2 rounded-md text-sm font-bold uppercase tracking-wide transition-all ${
-                  gameTab === 'city' 
-                    ? 'bg-gradient-to-r from-yellow-500 to-orange-400 text-slate-900 shadow-[0_8px_20px_rgba(234,179,8,0.35)] border border-yellow-400' 
-                    : 'bg-slate-800/80 text-blue-100 border border-slate-700 hover:border-yellow-300 hover:text-yellow-200 hover:shadow-[0_0_12px_rgba(234,179,8,0.35)]'
-                }`}
-              >
-                City
-              </button>
-              <button
-                onClick={() => setGameTab('battle')}
-                className={`relative px-5 py-2 rounded-md text-sm font-bold uppercase tracking-wide transition-all ${
-                  gameTab === 'battle' 
-                    ? 'bg-gradient-to-r from-yellow-500 to-orange-400 text-slate-900 shadow-[0_8px_20px_rgba(234,179,8,0.35)] border border-yellow-400' 
-                    : 'bg-slate-800/80 text-blue-100 border border-slate-700 hover:border-yellow-300 hover:text-yellow-200 hover:shadow-[0_0_12px_rgba(234,179,8,0.35)]'
-                }`}
-              >
-                Battle
-              </button>
-            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          {gameTab !== 'city' && (
-            <div className="hidden sm:flex items-center gap-2 bg-slate-900/70 border border-slate-800 rounded-full px-3 py-1">
-              <span className="text-[10px] uppercase text-slate-400">Resources</span>
-              <div className="flex items-center gap-2 text-xs font-mono">
-                <span className="text-yellow-300">🪙 {resources.gold.toFixed(0)}</span>
-                <span className="text-green-300">🌲 {resources.wood.toFixed(0)}</span>
-                <span className="text-slate-200">⛏ {resources.ore.toFixed(0)}</span>
-              </div>
-            </div>
-          )}
-          {/* Essence / Talent Button */}
-          <button 
-            onClick={() => { saveGame(); setView('talents'); }}
-            className="flex items-center gap-2 px-3 h-10 bg-purple-900/40 hover:bg-purple-800/60 text-purple-300 hover:text-purple-100 rounded border border-purple-800 hover:border-purple-500 transition-all shadow-sm"
-            title="Talent Tree"
+        <div className="flex items-center gap-2">
+           {/* Essence / Talent Button */}
+           <button 
+             onClick={() => { saveGame(); setView('talents'); }}
+             className="flex items-center gap-2 px-3 h-10 bg-purple-900/40 hover:bg-purple-800/60 text-purple-300 hover:text-purple-100 rounded border border-purple-800 hover:border-purple-500 transition-all shadow-sm"
+             title="Talent Tree"
            >
              <Sparkles size={16} /> 
-             <span className="font-bold font-mono flex items-center gap-1 leading-none">
-               <span className="text-lg">{eternalEssence}</span>
-               <span className="text-xs text-purple-200/80">( +{potentialEssence} )</span>
-             </span>
+             <span className="font-bold font-mono">{eternalEssence}</span>
            </button>
 
            {/* Settings / Cog Button */}
@@ -895,120 +745,18 @@ const App: React.FC = () => {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         <main className="flex-1 flex flex-col overflow-y-auto p-4 lg:p-8 relative scrollbar-thin">
-          {gameTab === 'city' ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <ResourceCard type="gold" amount={resources.gold} rate={rates.gold} />
-                <ResourceCard type="wood" amount={resources.wood} rate={rates.wood} />
-                <ResourceCard type="ore" amount={resources.ore} rate={rates.ore} />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <ResourceCard type="gold" amount={resources.gold} rate={rates.gold} />
+            <ResourceCard type="wood" amount={resources.wood} rate={rates.wood} />
+            <ResourceCard type="ore" amount={resources.ore} rate={rates.ore} />
+          </div>
 
-              <div className="flex-none mb-12">
-                <h2 className="text-xl font-bold text-blue-200 mb-6 flex items-center gap-2 font-serif">
-                  Actions
-                </h2>
-                <ClickerArea onGather={handleManualGather} raceId={raceId} />
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900/70 border border-slate-800 rounded-lg p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-slate-400">Gold</p>
-                    <p className="text-xl font-bold text-yellow-400">{resources.gold.toFixed(0)}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-500">for recruitment</span>
-                </div>
-                <div className="bg-slate-900/70 border border-slate-800 rounded-lg p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-slate-400">Wood</p>
-                    <p className="text-xl font-bold text-green-400">{resources.wood.toFixed(0)}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-500">for crafting</span>
-                </div>
-                <div className="bg-slate-900/70 border border-slate-800 rounded-lg p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-slate-400">Ore</p>
-                    <p className="text-xl font-bold text-slate-200">{resources.ore.toFixed(0)}</p>
-                  </div>
-                  <span className="text-[10px] text-slate-500">for armor</span>
-                </div>
-              </div>
-
-              {!raceId ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <div className="text-center space-y-3 max-w-md">
-                    <h2 className="text-2xl font-bold text-red-200 font-serif">Select a race to muster troops</h2>
-                    <p className="text-slate-300 text-sm leading-relaxed">
-                      Choose your faction to unlock race-specific units.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-bold text-red-200 font-serif flex items-center gap-2">
-                    Command Roster
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {units.map(unit => {
-                      const costGold = calculateCost(unit.baseCost.gold || 0, unit.costMultiplier, unit.count);
-                      const costWood = calculateCost(unit.baseCost.wood || 0, unit.costMultiplier, unit.count);
-                      const costOre = calculateCost(unit.baseCost.ore || 0, unit.costMultiplier, unit.count);
-                      const canAfford = resources.gold >= costGold && resources.wood >= costWood && resources.ore >= costOre;
-                      const roleColor = unit.role === 'melee' ? 'text-yellow-300' :
-                        unit.role === 'ranged' ? 'text-blue-200' :
-                        unit.role === 'caster' ? 'text-purple-200' :
-                        unit.role === 'flying' ? 'text-amber-200' : 'text-red-200';
-
-                      return (
-                        <div key={unit.id} className={`relative border rounded-lg p-4 bg-slate-900/70 ${canAfford ? 'border-red-500/50 hover:border-red-400' : 'border-slate-800'} transition-colors`}>
-                          <div className="flex justify-between items-start gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 rounded bg-red-900/30 border border-red-800 text-red-200">
-                                {getUnitIcon(unit.icon, 22)}
-                              </div>
-                              <div>
-                                <h3 className="font-serif font-bold text-slate-100">{unit.name}</h3>
-                                <p className="text-xs text-slate-400 max-w-xs">{unit.description}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-2xl font-bold text-slate-200">{unit.count}</div>
-                              <div className={`text-[10px] uppercase font-bold ${roleColor}`}>{unit.role}</div>
-                            </div>
-                          </div>
-
-                          <div className="mt-3 flex items-center gap-3 text-xs text-slate-300">
-                            <span className="px-2 py-1 rounded bg-slate-800 border border-slate-700">ATK {unit.attack}</span>
-                            <span className="px-2 py-1 rounded bg-slate-800 border border-slate-700">HP {unit.health}</span>
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                            {costGold > 0 && <span className={`px-2 py-1 rounded border ${resources.gold >= costGold ? 'border-yellow-500 text-yellow-200' : 'border-slate-700 text-slate-500'}`}>{costGold.toLocaleString()} Gold</span>}
-                            {costWood > 0 && <span className={`px-2 py-1 rounded border ${resources.wood >= costWood ? 'border-green-500 text-green-200' : 'border-slate-700 text-slate-500'}`}>{costWood.toLocaleString()} Wood</span>}
-                            {costOre > 0 && <span className={`px-2 py-1 rounded border ${resources.ore >= costOre ? 'border-slate-400 text-slate-200' : 'border-slate-700 text-slate-500'}`}>{costOre.toLocaleString()} Ore</span>}
-                          </div>
-
-                          <button
-                            onClick={() => handleRecruitUnit(unit.id)}
-                            disabled={!canAfford}
-                            className={`mt-3 w-full py-2 rounded font-bold text-sm uppercase tracking-wide border transition-all ${
-                              canAfford
-                                ? 'bg-red-600 hover:bg-red-500 text-white border-red-500'
-                                : 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
-                            }`}
-                          >
-                            Recruit
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="flex-none mb-12">
+            <h2 className="text-xl font-bold text-blue-200 mb-6 flex items-center gap-2 font-serif">
+              Actions
+            </h2>
+            <ClickerArea onGather={handleManualGather} raceId={raceId} />
+          </div>
         </main>
 
         <aside className="w-full md:w-80 lg:w-96 flex-none z-20 shadow-[0_0_20px_rgba(0,0,0,0.5)] border-l border-slate-800 bg-slate-900">
@@ -1019,7 +767,6 @@ const App: React.FC = () => {
             calculateCost={calculateCost}
             onBuyUpgrade={handleBuyUpgrade}
             calculateUpgradeCost={calculateUpgradeCost}
-            getLiveProduction={getBuildingLiveProduction}
           />
         </aside>
       </div>
